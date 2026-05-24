@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Intirock</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- CABECERA -->
+    <header id="header">
+      <span id="logo">☀</span>
+      <div id="header-text">
+        <h1>Intirock</h1>
+        <p>Instrumento arqueoastronómico</p>
+      </div>
+    </header>
+
+    <!-- ESTADO DE SENSORES -->
+    <div id="status-bar">
+      <span id="chip-sensors" class="chip">Sensores —</span>
+      <span id="chip-gps"     class="chip">GPS —</span>
+      <span id="chip-year"    class="chip">Año —</span>
+    </div>
+
+    <!-- COINCIDENCIAS PROBABLES -->
+    <section id="candidates">
+      <h2>Coincidencias probables</h2>
+      <div id="candidates-grid">
+        <div class="candidate-card" id="card-f1">
+          <div class="candidate-date">—</div>
+          <div class="candidate-score">—</div>
+        </div>
+        <div class="candidate-card" id="card-f2">
+          <div class="candidate-date">—</div>
+          <div class="candidate-score">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEDICIÓN + AÑO + ACCIONES -->
+    <section id="measurement">
+      <div id="measurement-left">
+        <div id="azimuth-block">
+          <span class="meas-label">Azimut</span>
+          <span class="meas-value" id="val-azimuth">—°</span>
+        </div>
+        <div id="elevation-block">
+          <span class="meas-label">Inclinación</span>
+          <span class="meas-value" id="val-elevation">—°</span>
+        </div>
+        <div id="year-block">
+          <span class="meas-label">Año</span>
+          <span class="meas-value" id="val-year">2024</span>
+          <input type="range" id="year-slider"
+                 min="-2000" max="6000" value="2024" step="1" />
+        </div>
+      </div>
+      <div id="measurement-right">
+        <button id="btn-freeze">Congelar lectura</button>
+        <button id="btn-capture">Capturar pantalla</button>
+      </div>
+    </section>
+
+    <!-- DIAL -->
+    <section id="dial-section">
+      <canvas id="dial-canvas" width="220" height="220"></canvas>
+      <p id="dial-hint">Apoya la espalda del teléfono sobre la roca y gíralo para explorar la coincidencia solar.</p>
+    </section>
+
+    <!-- PIE -->
+    <footer id="footer">
+      Altitud GPS aproximada (±10 m). Herramienta de exploración, no de laboratorio.
+    </footer>
+
+  </div><!-- /#app -->
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

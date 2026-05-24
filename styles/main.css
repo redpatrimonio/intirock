@@ -1,0 +1,194 @@
+/* =============================================================
+   INTIROCK — Main
+   Layout general de #app y estilos de cada componente.
+   Baseline: 360px ancho × 640px alto (móvil estándar).
+   ============================================================= */
+
+/* --- App shell --- */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+  gap: var(--space-2);
+  overflow: hidden;
+}
+
+/* --- Cabecera --- */
+#header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+#logo {
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+#header-text h1 {
+  font-size: var(--font-size-lg);
+}
+
+#header-text p {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* --- Barra de estado --- */
+#status-bar {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.chip {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.chip.ok    { border-color: var(--color-ok);   color: var(--color-ok);   }
+.chip.warn  { border-color: var(--color-warn);  color: var(--color-warn);  }
+.chip.error { border-color: var(--color-error); color: var(--color-error); }
+
+/* --- Coincidencias probables --- */
+#candidates {
+  flex-shrink: 0;
+}
+
+#candidates h2 {
+  margin-bottom: var(--space-2);
+}
+
+#candidates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.candidate-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-align: center;
+}
+
+.candidate-date {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  line-height: var(--line-height-tight);
+}
+
+.candidate-score {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+/* --- Medición + año + acciones --- */
+#measurement {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+#measurement-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#measurement-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  min-width: 120px;
+}
+
+#azimuth-block,
+#elevation-block {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.meas-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-width: 64px;
+}
+
+.meas-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  line-height: var(--line-height-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+#year-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+#year-block .meas-value {
+  font-size: var(--font-size-xl);
+}
+
+/* Botón congelar — acento cuando está activo */
+#btn-freeze.frozen {
+  background:   var(--color-accent);
+  border-color: var(--color-accent);
+  color:        #111111;
+}
+
+/* --- Dial --- */
+#dial-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 0; /* permite que flex comprima si falta espacio */
+}
+
+#dial-canvas {
+  width:  min(220px, 45vw, 38vh);
+  height: min(220px, 45vw, 38vh);
+}
+
+#dial-hint {
+  font-size:  var(--font-size-xs);
+  color:      var(--color-text-muted);
+  text-align: center;
+  max-width:  280px;
+}
+
+/* --- Footer --- */
+#footer {
+  flex-shrink: 0;
+  font-size:  var(--font-size-xs);
+  color:      var(--color-text-muted);
+  text-align: center;
+  padding-bottom: var(--space-2);
+}

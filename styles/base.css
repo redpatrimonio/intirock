@@ -1,0 +1,87 @@
+/* =============================================================
+   INTIROCK — Base
+   Reset mínimo + estilos de body y elementos globales.
+   No define componentes; solo la base sobre la que construye main.css.
+   ============================================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  /* Evita que iOS cambie el tamaño de fuente al rotar */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family:      var(--font-family);
+  font-size:        var(--font-size-md);
+  font-weight:      var(--font-weight-normal);
+  line-height:      var(--line-height-normal);
+  color:            var(--color-text-primary);
+  background-color: var(--color-bg);
+
+  /* Ocupa exactamente la ventana visible; sin rebote en iOS */
+  min-height: 100dvh;
+  overflow: hidden;
+
+  /* Evita selección de texto accidental al usar la app como instrumento */
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* Desactiva el highlight azul en tap (Android) */
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1 {
+  font-size:   var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color:       var(--color-text-primary);
+}
+
+h2 {
+  font-size:   var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  color:       var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+p {
+  font-size: var(--font-size-sm);
+  color:     var(--color-text-secondary);
+}
+
+button {
+  font-family:  var(--font-family);
+  font-size:    var(--font-size-sm);
+  font-weight:  var(--font-weight-medium);
+  cursor:       pointer;
+  border:       1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background:   var(--color-surface);
+  color:        var(--color-text-primary);
+  padding:      var(--space-2) var(--space-4);
+  transition:   background var(--transition-fast);
+  width: 100%;
+}
+
+button:active {
+  background: var(--color-surface-alt);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+canvas {
+  display: block;
+}

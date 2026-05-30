@@ -16,6 +16,10 @@
      await screen.mount();    // muestra la pantalla y arranca servicios
      screen.unmount();        // oculta y libera cámara + sensores
 
+   El DOM se construye una sola vez (primera llamada a mount()).
+   Las siguientes llamadas reutilizan el DOM existente y solo
+   vuelven a arrancar cámara, sensores y observers.
+
    El estado del GPS se recibe como referencia al GeolocationService
    ya iniciado en app.js, para no reiniciarlo al cambiar de modo.
    ============================================================= */
@@ -39,7 +43,7 @@ export class ScreenHorizonMode {
   #reticle     = null;
   #resizeObs   = null;
 
-  #root = null;    // elemento raíz de la pantalla (creado en mount)
+  #root = null;    // elemento raíz de la pantalla (creado solo una vez)
 
   #state = {
     azimuth:         null,
@@ -58,7 +62,7 @@ export class ScreenHorizonMode {
   // -----------------------------------------------------------
 
   /**
-   * @param {HTMLElement}       container  - Elemento donde montar la pantalla
+   * @param {HTMLElement}        container  - Elemento donde montar la pantalla
    * @param {GeolocationService} geoService - Servicio GPS ya iniciado
    */
   constructor(container, geoService) {
@@ -71,16 +75,31 @@ export class ScreenHorizonMode {
   // -----------------------------------------------------------
 
   /**
-   * Construye el DOM, arranca cámara y sensores, y muestra la pantalla.
+   * Muestra la pantalla y arranca cámara y sensores.
+   * El DOM se construye solo en la primera llamada.
+   * Las siguientes reutilizan el DOM existente.
    * @returns {Promise<void>}
    */
   async mount() {
-    this.#buildDOM();
-    this.#attachEvents();
+    // --- DOM: construir solo la primera vez ---
+    if (!this.#root) {
+      this.#buildDOM();
+      this.#attachEvents();
+    }
+
+    // Resetear estado de congelado al remontar
+    if (this.#state.frozen) {
+      this.#state.frozen = false;
+      const btn = this.#root.querySelector('#horizon-btn-freeze');
+      if (btn) {
+        btn.textContent = 'Congelar lectura';
+        btn.classList.remove('frozen');
+      }
+    }
 
     // Posición GPS actual (puede ya estar disponible)
     const geoLast = this.#geoService.last;
-    if (geoLast.lat !== null) {
+    if (geoLast && geoLast.lat !== null) {
       this.#state.lat      = geoLast.lat;
       this.#state.lon      = geoLast.lon;
       this.#state.altitude = geoLast.altitude;
@@ -113,17 +132,16 @@ export class ScreenHorizonMode {
     this.#orientation.subscribe(this.#orientUnsub);
 
     // Arrancar cámara
-    const videoEl    = this.#root.querySelector('#horizon-video');
+    const videoEl      = this.#root.querySelector('#horizon-video');
     const cameraStatus = await this.#camera.start(videoEl);
     if (cameraStatus === 'error' || cameraStatus === 'unsupported') {
       this.#showCameraError(cameraStatus);
     }
 
-    // Retícula
+    // Retícula + ResizeObserver
     const canvasEl  = this.#root.querySelector('#horizon-reticle');
     this.#reticle   = new Reticle(canvasEl);
 
-    // Ajustar tamaño del canvas al contenedor del video
     const videoWrap = this.#root.querySelector('#horizon-video-wrap');
     this.#resizeObs = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
@@ -141,6 +159,7 @@ export class ScreenHorizonMode {
 
   /**
    * Oculta la pantalla y libera cámara, sensores y observers.
+   * El DOM se conserva para la próxima llamada a mount().
    */
   unmount() {
     this.#camera.stop();
@@ -164,11 +183,11 @@ export class ScreenHorizonMode {
   }
 
   // -----------------------------------------------------------
-  // Construcción del DOM
+  // Construcción del DOM (solo se llama una vez)
   // -----------------------------------------------------------
 
   #buildDOM() {
-    const el = document.createElement('div');
+    const el  = document.createElement('div');
     el.id     = 'screen-horizon';
     el.hidden = true;
     el.innerHTML = `
@@ -231,7 +250,7 @@ export class ScreenHorizonMode {
   }
 
   // -----------------------------------------------------------
-  // Eventos de controles
+  // Eventos de controles (se registran solo una vez)
   // -----------------------------------------------------------
 
   #attachEvents() {
@@ -239,13 +258,13 @@ export class ScreenHorizonMode {
 
     q('horizon-year-slider').addEventListener('input', (e) => {
       this.#state.year = parseInt(e.target.value, 10);
-      q('horizon-val-year').textContent          = this.#state.year;
-      q('horizon-chip-year').textContent         = `Año ${this.#state.year}`;
+      q('horizon-val-year').textContent  = this.#state.year;
+      q('horizon-chip-year').textContent = `Año ${this.#state.year}`;
       this.#scheduleCalc();
     });
 
-    q('horizon-btn-freeze').addEventListener('click', () => this.#toggleFreeze());
-    q('horizon-btn-capture').addEventListener('click', () => this.#onCapture());
+    q('horizon-btn-freeze').addEventListener('click',   () => this.#toggleFreeze());
+    q('horizon-btn-capture').addEventListener('click',  () => this.#onCapture());
   }
 
   // -----------------------------------------------------------
@@ -253,8 +272,8 @@ export class ScreenHorizonMode {
   // -----------------------------------------------------------
 
   #scheduleCalc() {
-    if (this.#state.azimuth  === null) return;
-    if (this.#state.lat      === null) return;
+    if (this.#state.azimuth === null) return;
+    if (this.#state.lat     === null) return;
 
     clearTimeout(this.#calcTimer);
     this.#calcTimer = setTimeout(() => {
@@ -376,7 +395,10 @@ export class ScreenHorizonMode {
 
   #showCameraError(status) {
     const wrap = this.#root.querySelector('#horizon-video-wrap');
+    // Evitar duplicar el mensaje si ya existe
+    if (wrap.querySelector('.camera-error-msg')) return;
     const msg  = document.createElement('div');
+    msg.className   = 'camera-error-msg';
     msg.textContent = status === 'unsupported'
       ? 'Este navegador no soporta acceso a la cámara.'
       : 'No se pudo acceder a la cámara. Verifica los permisos.';

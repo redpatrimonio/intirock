@@ -79,14 +79,30 @@
 
 /* ============================================================
    CONTENEDORES DE MODO
+   ============================================================
+
+   Ambos contenedores son flex-column y ocupan todo el espacio
+   disponible restante en #app. El atributo [hidden] los oculta
+   con display:none, por eso NO usamos display:contents.
    ============================================================ */
 
-/* Wrapper del Modo 1: hereda el layout flexbox de #app */
+/* Wrapper Modo 1: columna flex que replica el gap de #app
+   para que sus hijos se vean igual que antes */
 #screen-rock {
-  display: contents; /* transparente al layout: los hijos participan directamente en #app */
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-/* Mount point del Modo 2: ocupa el espacio restante */
+/* Cuando está oculto, no ocupa espacio */
+#screen-rock[hidden],
+#screen-horizon-container[hidden] {
+  display: none;
+}
+
+/* Mount point del Modo 2 */
 #screen-horizon-container {
   flex: 1;
   min-height: 0;
@@ -139,13 +155,12 @@
   flex-direction: column;
   justify-content: space-between;
   pointer-events: none;
-  /* Gradientes suaves para legibilidad del texto sobre cualquier fondo */
   background:
     linear-gradient(to bottom,  rgba(0,0,0,0.55) 0%, transparent 35%),
     linear-gradient(to top,     rgba(0,0,0,0.55) 0%, transparent 35%);
 }
 
-/* Chips de estado (zona superior del overlay) */
+/* Chips de estado (zona superior) */
 #horizon-chips {
   display: flex;
   gap: var(--space-2);
@@ -153,7 +168,7 @@
   flex-wrap: wrap;
 }
 
-/* Lecturas de azimut y altitud (zona superior del overlay) */
+/* Lecturas azimut + altitud (zona superior) */
 #horizon-readings {
   display: flex;
   gap: var(--space-4);
@@ -181,7 +196,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Tarjetas de fechas candidatas (zona inferior del overlay) */
+/* Tarjetas candidatas (zona inferior) */
 #horizon-candidates {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -190,8 +205,6 @@
   pointer-events: none;
 }
 
-/* Las candidate-card ya tienen estilos globales;
-   en el overlay añadimos semitransparencia */
 #horizon-candidates .candidate-card {
   background: rgba(30,30,30,0.78);
   backdrop-filter: blur(4px);
@@ -235,7 +248,7 @@
 }
 
 /* ============================================================
-   MODO 1: estilos originales (sin cambios)
+   MODO 1: estilos originales
    ============================================================ */
 
 /* --- Barra de estado --- */
@@ -391,14 +404,16 @@
 
 /* ============================================================
    RESPONSIVE: pantallas de altura reducida (< 680px)
-   Compacta gaps y tamaño de fuentes en valores grandes
-   para que todo quepa sin scroll en ambos modos.
    ============================================================ */
 
 @media (max-height: 680px) {
   #app {
     gap: var(--space-1);
     padding: var(--space-2) var(--space-3);
+  }
+
+  #screen-rock {
+    gap: var(--space-1);
   }
 
   .candidate-date,
@@ -413,7 +428,6 @@
   }
 
   #horizon-video-wrap {
-    /* En altura muy reducida priorizamos que los controles sean visibles */
     min-height: 0;
   }
 }

@@ -76,10 +76,10 @@ export class Reticle {
     const gap = this.#GAP;
     const arm = this.#ARM_LENGTH;
 
-    this.#line(ctx, cx,       cy - gap,       cx,           cy - gap - arm); // superior
-    this.#line(ctx, cx,       cy + gap,       cx,           cy + gap + arm); // inferior
-    this.#line(ctx, cx - gap, cy,             cx - gap - arm, cy);           // izquierdo
-    this.#line(ctx, cx + gap, cy,             cx + gap + arm, cy);           // derecho
+    this.#line(ctx, cx,       cy - gap,         cx,             cy - gap - arm); // superior
+    this.#line(ctx, cx,       cy + gap,         cx,             cy + gap + arm); // inferior
+    this.#line(ctx, cx - gap, cy,               cx - gap - arm, cy);             // izquierdo
+    this.#line(ctx, cx + gap, cy,               cx + gap + arm, cy);             // derecho
 
     // --- Círculo central ---
     ctx.lineWidth = this.#RING_W;
@@ -100,6 +100,10 @@ export class Reticle {
    * Actualiza las dimensiones del canvas respetando devicePixelRatio
    * y redibuja. Llamar desde un ResizeObserver.
    *
+   * IMPORTANTE: setTransform() resetea la matriz a identidad antes
+   * de aplicar el nuevo scale(), evitando acumulación de escala
+   * si resize() se llama más de una vez (ej. rotación de pantalla).
+   *
    * @param {number} width  - Ancho en píxeles CSS
    * @param {number} height - Alto en píxeles CSS
    */
@@ -109,6 +113,8 @@ export class Reticle {
     this.#canvas.height = height * dpr;
     this.#canvas.style.width  = `${width}px`;
     this.#canvas.style.height = `${height}px`;
+    // Resetear matriz a identidad antes de escalar
+    this.#ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.#ctx.scale(dpr, dpr);
     this.draw();
   }

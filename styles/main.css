@@ -78,36 +78,35 @@
 }
 
 /* ============================================================
-   CONTENEDORES DE MODO
+   CONTENEDOR DE PANTALLAS
 
-   IMPORTANTE: usamos !important en [hidden] porque base.css no
-   define una regla para [hidden], y el display:flex declarado
-   abajo ganaría sobre el display:none nativo del atributo hidden.
+   #screens ocupa todo el espacio restante entre el selector
+   y el footer. Cada modo es position:absolute inset:0 dentro
+   de él, como dos páginas que se alternan. Nunca coexisten
+   visualmente aunque ambas estén en el DOM.
    ============================================================ */
 
-#screen-rock[hidden],
-#screen-horizon-container[hidden] {
-  display: none !important;
-}
-
-/* Wrapper Modo 1: columna flex sin gap propio.
-   El spacing entre sus hijos lo dan los flex-shrink y los
-   márgenes propios de cada componente, igual que antes. */
-#screen-rock {
+#screens {
+  position: relative;
   flex: 1;
   min-height: 0;
+}
+
+/* Cada pantalla de modo ocupa exactamente #screens */
+#screen-rock,
+#screen-horizon-container {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   overflow: hidden;
 }
 
-/* Mount point del Modo 2 */
-#screen-horizon-container {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+/* Ocultar el modo inactivo */
+#screen-rock[hidden],
+#screen-horizon-container[hidden] {
+  display: none !important;
 }
 
 /* ============================================================
@@ -244,7 +243,7 @@
 }
 
 /* ============================================================
-   MODO 1: estilos originales
+   MODO 1: ROCA
    ============================================================ */
 
 /* --- Barra de estado --- */
@@ -367,18 +366,18 @@
 }
 
 /* --- Dial ---
-   flex: 0 1 auto + max-height evita que el dial expanda
-   #screen-rock y empuje el slider fuera de pantalla.
-   El canvas se adapta dentro de ese techo. */
+   flex:1 para ocupar el espacio sobrante dentro de #screen-rock.
+   overflow:hidden garantiza que no desborde aunque la pantalla
+   sea muy baja. El canvas se limita con min(). */
 #dial-section {
-  flex: 0 1 auto;
-  max-height: min(260px, 38vh);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 0;
 }
 
 #dial-canvas {
@@ -412,7 +411,8 @@
     padding: var(--space-2) var(--space-3);
   }
 
-  #screen-rock {
+  #screen-rock,
+  #screen-horizon-container {
     gap: var(--space-1);
   }
 
@@ -420,10 +420,6 @@
   .meas-value,
   .horizon-value {
     font-size: var(--font-size-xl);
-  }
-
-  #dial-section {
-    max-height: min(200px, 28vh);
   }
 
   #dial-canvas {

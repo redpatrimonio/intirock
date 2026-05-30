@@ -138,19 +138,29 @@ export class ScreenHorizonMode {
       this.#showCameraError(cameraStatus);
     }
 
-    // Retícula + ResizeObserver
+    // Mostrar pantalla antes de inicializar la retícula,
+    // para que el contenedor ya tenga dimensiones reales.
+    this.#root.hidden = false;
+
+    // Retícula: crear instancia y forzar resize inicial
+    // ahora que el DOM es visible y tiene dimensiones.
     const canvasEl  = this.#root.querySelector('#horizon-reticle');
+    const videoWrap = this.#root.querySelector('#horizon-video-wrap');
     this.#reticle   = new Reticle(canvasEl);
 
-    const videoWrap = this.#root.querySelector('#horizon-video-wrap');
-    this.#resizeObs = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect;
+    // Resize inicial explícito (el ResizeObserver puede no disparar
+    // si el contenedor ya tenía dimensiones antes de ser observado)
+    const { width, height } = videoWrap.getBoundingClientRect();
+    if (width > 0 && height > 0) {
       this.#reticle.resize(width, height);
+    }
+
+    // ResizeObserver para cambios posteriores (rotación, etc.)
+    this.#resizeObs = new ResizeObserver(entries => {
+      const { width: w, height: h } = entries[0].contentRect;
+      if (w > 0 && h > 0) this.#reticle.resize(w, h);
     });
     this.#resizeObs.observe(videoWrap);
-
-    // Mostrar pantalla
-    this.#root.hidden = false;
   }
 
   // -----------------------------------------------------------
@@ -395,7 +405,6 @@ export class ScreenHorizonMode {
 
   #showCameraError(status) {
     const wrap = this.#root.querySelector('#horizon-video-wrap');
-    // Evitar duplicar el mensaje si ya existe
     if (wrap.querySelector('.camera-error-msg')) return;
     const msg  = document.createElement('div');
     msg.className   = 'camera-error-msg';

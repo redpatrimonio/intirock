@@ -131,14 +131,17 @@ async function switchMode(mode) {
   ui.btnModeHorizon.classList.toggle('active', mode === 'horizon');
 
   if (mode === 'rock') {
-    // Desmontar Modo 2
+    // Desmontar Modo 2 y ocultar su contenedor
     if (horizonScreen) horizonScreen.unmount();
+    ui.horizonContainer.hidden = true;
     // Mostrar Modo 1
     ui.screenRock.hidden = false;
 
   } else {
     // Ocultar Modo 1
     ui.screenRock.hidden = true;
+    // Mostrar contenedor Modo 2 antes de montar
+    ui.horizonContainer.hidden = false;
     // Montar Modo 2 (lazy: solo se crea la primera vez)
     if (!horizonScreen) {
       horizonScreen = new ScreenHorizonMode(ui.horizonContainer, geolocation);

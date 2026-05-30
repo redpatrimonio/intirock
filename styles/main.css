@@ -79,27 +79,27 @@
 
 /* ============================================================
    CONTENEDORES DE MODO
-   ============================================================
 
-   Ambos contenedores son flex-column y ocupan todo el espacio
-   disponible restante en #app. El atributo [hidden] los oculta
-   con display:none, por eso NO usamos display:contents.
+   IMPORTANTE: usamos !important en [hidden] porque base.css no
+   define una regla para [hidden], y el display:flex declarado
+   abajo ganaría sobre el display:none nativo del atributo hidden.
    ============================================================ */
 
-/* Wrapper Modo 1: columna flex que replica el gap de #app
-   para que sus hijos se vean igual que antes */
+#screen-rock[hidden],
+#screen-horizon-container[hidden] {
+  display: none !important;
+}
+
+/* Wrapper Modo 1: columna flex sin gap propio.
+   El spacing entre sus hijos lo dan los flex-shrink y los
+   márgenes propios de cada componente, igual que antes. */
 #screen-rock {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-
-/* Cuando está oculto, no ocupa espacio */
-#screen-rock[hidden],
-#screen-horizon-container[hidden] {
-  display: none;
+  overflow: hidden;
 }
 
 /* Mount point del Modo 2 */
@@ -140,7 +140,6 @@
   display: block;
 }
 
-/* Canvas de la retícula: encima del video, sin capturar eventos */
 #horizon-reticle {
   position: absolute;
   inset: 0;
@@ -156,11 +155,10 @@
   justify-content: space-between;
   pointer-events: none;
   background:
-    linear-gradient(to bottom,  rgba(0,0,0,0.55) 0%, transparent 35%),
-    linear-gradient(to top,     rgba(0,0,0,0.55) 0%, transparent 35%);
+    linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 35%),
+    linear-gradient(to top,    rgba(0,0,0,0.55) 0%, transparent 35%);
 }
 
-/* Chips de estado (zona superior) */
 #horizon-chips {
   display: flex;
   gap: var(--space-2);
@@ -168,7 +166,6 @@
   flex-wrap: wrap;
 }
 
-/* Lecturas azimut + altitud (zona superior) */
 #horizon-readings {
   display: flex;
   gap: var(--space-4);
@@ -196,7 +193,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Tarjetas candidatas (zona inferior) */
 #horizon-candidates {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -370,9 +366,13 @@
   color:        #111111;
 }
 
-/* --- Dial --- */
+/* --- Dial ---
+   flex: 0 1 auto + max-height evita que el dial expanda
+   #screen-rock y empuje el slider fuera de pantalla.
+   El canvas se adapta dentro de ese techo. */
 #dial-section {
-  flex: 1;
+  flex: 0 1 auto;
+  max-height: min(260px, 38vh);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -422,12 +422,12 @@
     font-size: var(--font-size-xl);
   }
 
-  #dial-canvas {
-    width:  min(180px, 40vw, 30vh);
-    height: min(180px, 40vw, 30vh);
+  #dial-section {
+    max-height: min(200px, 28vh);
   }
 
-  #horizon-video-wrap {
-    min-height: 0;
+  #dial-canvas {
+    width:  min(180px, 40vw, 28vh);
+    height: min(180px, 40vw, 28vh);
   }
 }

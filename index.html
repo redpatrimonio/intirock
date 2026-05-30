@@ -32,69 +32,74 @@
       <button id="btn-mode-horizon"  class="mode-btn">Horizonte</button>
     </div>
 
-    <!-- ================================================ -->
-    <!-- MODO 1: ROCA                                     -->
-    <!-- ================================================ -->
-    <div id="screen-rock">
+    <!-- CONTENEDOR DE PANTALLAS (cada modo ocupa el mismo espacio) -->
+    <div id="screens">
 
-      <!-- ESTADO DE SENSORES -->
-      <div id="status-bar">
-        <span id="chip-sensors" class="chip">Sensores &#x2014;</span>
-        <span id="chip-gps"     class="chip">GPS &#x2014;</span>
-        <span id="chip-year"    class="chip">A&#xF1;o &#x2014;</span>
-      </div>
+      <!-- ============================================== -->
+      <!-- MODO 1: ROCA                                   -->
+      <!-- ============================================== -->
+      <div id="screen-rock">
 
-      <!-- COINCIDENCIAS PROBABLES -->
-      <section id="candidates">
-        <h2>Coincidencias probables</h2>
-        <div id="candidates-grid">
-          <div class="candidate-card" id="card-f1">
-            <div class="candidate-date">&#x2014;</div>
-            <div class="candidate-score">&#x2014;</div>
-          </div>
-          <div class="candidate-card" id="card-f2">
-            <div class="candidate-date">&#x2014;</div>
-            <div class="candidate-score">&#x2014;</div>
-          </div>
+        <!-- ESTADO DE SENSORES -->
+        <div id="status-bar">
+          <span id="chip-sensors" class="chip">Sensores &#x2014;</span>
+          <span id="chip-gps"     class="chip">GPS &#x2014;</span>
+          <span id="chip-year"    class="chip">A&#xF1;o &#x2014;</span>
         </div>
-      </section>
 
-      <!-- MEDICI&#xD3;N + A&#xD1;O + ACCIONES -->
-      <section id="measurement">
-        <div id="measurement-left">
-          <div id="azimuth-block">
-            <span class="meas-label">Azimut</span>
-            <span class="meas-value" id="val-azimuth">&#x2014;&#xB0;</span>
+        <!-- COINCIDENCIAS PROBABLES -->
+        <section id="candidates">
+          <h2>Coincidencias probables</h2>
+          <div id="candidates-grid">
+            <div class="candidate-card" id="card-f1">
+              <div class="candidate-date">&#x2014;</div>
+              <div class="candidate-score">&#x2014;</div>
+            </div>
+            <div class="candidate-card" id="card-f2">
+              <div class="candidate-date">&#x2014;</div>
+              <div class="candidate-score">&#x2014;</div>
+            </div>
           </div>
-          <div id="elevation-block">
-            <span class="meas-label">Inclinaci&#xF3;n</span>
-            <span class="meas-value" id="val-elevation">&#x2014;&#xB0;</span>
+        </section>
+
+        <!-- MEDICI&#xD3;N + A&#xD1;O + ACCIONES -->
+        <section id="measurement">
+          <div id="measurement-left">
+            <div id="azimuth-block">
+              <span class="meas-label">Azimut</span>
+              <span class="meas-value" id="val-azimuth">&#x2014;&#xB0;</span>
+            </div>
+            <div id="elevation-block">
+              <span class="meas-label">Inclinaci&#xF3;n</span>
+              <span class="meas-value" id="val-elevation">&#x2014;&#xB0;</span>
+            </div>
+            <div id="year-block">
+              <span class="meas-label">A&#xF1;o</span>
+              <span class="meas-value" id="val-year">2024</span>
+              <input type="range" id="year-slider"
+                     min="-2000" max="6000" value="2024" step="1" />
+            </div>
           </div>
-          <div id="year-block">
-            <span class="meas-label">A&#xF1;o</span>
-            <span class="meas-value" id="val-year">2024</span>
-            <input type="range" id="year-slider"
-                   min="-2000" max="6000" value="2024" step="1" />
+          <div id="measurement-right">
+            <button id="btn-freeze">Congelar lectura</button>
+            <button id="btn-capture">Capturar pantalla</button>
           </div>
-        </div>
-        <div id="measurement-right">
-          <button id="btn-freeze">Congelar lectura</button>
-          <button id="btn-capture">Capturar pantalla</button>
-        </div>
-      </section>
+        </section>
 
-      <!-- DIAL -->
-      <section id="dial-section">
-        <canvas id="dial-canvas" width="220" height="220"></canvas>
-        <p id="dial-hint">Apoya la espalda del tel&#xE9;fono sobre la roca y g&#xED;ralo para explorar la coincidencia solar.</p>
-      </section>
+        <!-- DIAL -->
+        <section id="dial-section">
+          <canvas id="dial-canvas" width="220" height="220"></canvas>
+          <p id="dial-hint">Apoya la espalda del tel&#xE9;fono sobre la roca y g&#xED;ralo para explorar la coincidencia solar.</p>
+        </section>
 
-    </div><!-- /#screen-rock -->
+      </div><!-- /#screen-rock -->
 
-    <!-- ================================================ -->
-    <!-- MODO 2: HORIZONTE (montado din&#xE1;micamente por app.js) -->
-    <!-- ================================================ -->
-    <div id="screen-horizon-container"></div>
+      <!-- ============================================== -->
+      <!-- MODO 2: HORIZONTE                              -->
+      <!-- ============================================== -->
+      <div id="screen-horizon-container" hidden></div>
+
+    </div><!-- /#screens -->
 
     <!-- PIE -->
     <footer id="footer">

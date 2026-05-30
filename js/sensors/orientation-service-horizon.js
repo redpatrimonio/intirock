@@ -10,15 +10,25 @@
      elevation: altitud angular del eje óptico sobre el horizonte
                 positivo = apunta hacia arriba, negativo = hacia abajo
 
-   Mapeo de ejes DeviceOrientation → Modo 2:
-     alpha (Z) → brújula → azimut (igual que Modo 1)
-     gamma (Y) → inclinación lateral cuando el teléfono está vertical
-               → es la altitud angular del eje óptico en Modo 2
-               rango: -90 (apunta al suelo) a +90 (apunta al cielo)
-               0 = apunta horizontalmente al horizonte
+   Mapeo de ejes DeviceOrientation → Modo 2 (teléfono VERTICAL):
 
-   Nota: beta (X) no se usa en Modo 2; describe la inclinación
-   frontal-trasera del teléfono cuando está vertical, no el eje óptico.
+     alpha (Z) → brújula → azimut (igual que Modo 1)
+
+     beta  (X) → inclinación adelante/atrás del teléfono vertical
+               → es la altitud angular del eje óptico en Modo 2
+               rango estándar: -180 a +180
+               beta = 90  → teléfono vertical, cámara al horizonte  → elevation = 0°
+               beta = 135 → cámara apunta 45° hacia arriba          → elevation = +45°
+               beta = 45  → cámara apunta 45° hacia abajo           → elevation = -45°
+               Fórmula: elevation = beta - 90
+
+     gamma (Y) → balanceo lateral izquierda/derecha del teléfono
+               → NO describe el eje óptico cuando el teléfono está vertical
+               → no se usa en Modo 2
+
+   Nota: beta (X) en posición vertical es el único eje que describe
+   cuánto está inclinada la cámara respecto al horizonte.
+   gamma describe el balanceo lateral y es irrelevante para este uso.
    ============================================================= */
 
 export class OrientationServiceHorizon {
@@ -116,17 +126,21 @@ export class OrientationServiceHorizon {
 
   /**
    * Altitud angular del eje óptico en Modo 2.
-   * Cuando el teléfono está vertical (beta ≈ 90°):
-   *   gamma =  0  → cámara apunta horizontalmente
-   *   gamma = +90 → cámara apunta al cénit
-   *   gamma = -90 → cámara apunta al suelo
-   * Invertimos el signo porque gamma positivo en el estándar
-   * corresponde a inclinar el teléfono hacia la derecha,
-   * que en posición vertical equivale a apuntar hacia abajo.
+   *
+   * El teléfono está VERTICAL sostenido como para tomar una foto.
+   * En esa posición, beta describe cuánto se inclina la cámara
+   * respecto al horizonte:
+   *
+   *   beta = 90  → cámara mirando exactamente al horizonte → 0°
+   *   beta > 90  → cámara apunta hacia arriba              → positivo
+   *   beta < 90  → cámara apunta hacia abajo               → negativo
+   *
+   * Fórmula: elevation = beta - 90
+   * Rango resultante: aproximadamente -90° a +90°
    */
   #extractElevation(e) {
-    if (e.gamma === null || e.gamma === undefined) return null;
-    return Math.max(-90, Math.min(90, -e.gamma));
+    if (e.beta === null || e.beta === undefined) return null;
+    return Math.max(-90, Math.min(90, e.beta - 90));
   }
 
 }

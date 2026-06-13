@@ -144,6 +144,11 @@
 #horizon-reticle {
   position: absolute;
   inset: 0;
+  /* width/height explícitos son necesarios: <canvas> tiene
+     dimensiones intrínsecas (300×150px por defecto) que
+     impiden que inset:0 lo estire como a un <div>. */
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 

@@ -134,56 +134,71 @@
 }
 
 /* ============================================================
-   CROSSHAIR (CSS puro — sin canvas, sin timing)
+   CROSSHAIR TELEOBJETIVO
 
-   #horizon-reticle es un <div> centrado sobre el video.
-   Los brazos de la cruz son ::before (horizontal) y ::after
-   (vertical). El círculo central es el propio div con
-   border-radius: 50%.
+   Diseño:
+     - Círculo central pequeño: 20px de diámetro
+     - Brazos cortos que salen desde el exterior del círculo
+     - Hueco entre círculo y brazo: 4px
+     - Largo de cada brazo: 14px
 
-   Sombra via filter:drop-shadow para contraste sobre
-   cualquier fondo (cielo claro, roca oscura).
+   Toda la geometría en px absolutos — cero % —
+   para que no dependa del tamaño del contenedor.
+
+   Variables locales (comentario, no CSS vars):
+     --r = 10px  (radio del círculo = width/2)
+     --gap = 4px (hueco entre círculo y brazo)
+     --arm = 14px (largo del brazo)
    ============================================================ */
 
 #horizon-reticle {
-  position: absolute;
-  top:  50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width:  28px;
-  height: 28px;
-  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  /* Tamaño fijo del círculo: 20×20 px */
+  position:      absolute;
+  top:           50%;
+  left:          50%;
+  transform:     translate(-50%, -50%);
+  width:         20px;
+  height:        20px;
+  flex-shrink:   0;    /* evita que flex lo aplaste */
+  border:        1.5px solid rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   pointer-events: none;
-  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
+  /* drop-shadow sobre el propio div + pseudoelementos */
+  filter: drop-shadow(0 0 2.5px rgba(0, 0, 0, 0.8));
 }
 
-/* Brazo horizontal */
+/* Brazo horizontal
+   Empieza a -(radio + gap) = -(10+4) = -14px desde el centro del div
+   (left: 50% = 10px desde el borde izquierdo del div)
+   Longitud total: 2*(radio + gap + brazo) = 2*(10+4+14) = 56px
+   Oculta la parte que se superpone al círculo con clip-path */
 #horizon-reticle::before {
-  content: '';
-  position: absolute;
-  top:    50%;
-  left:   calc(-28px - 6px);   /* gap de 6px + brazo de 28px */
-  width:  calc(100% + 56px + 12px);
-  height: 1.5px;
+  content:    '';
+  position:   absolute;
+  top:        50%;
+  left:       50%;
+  width:      56px;          /* 2 × (10+4+14) */
+  height:     1.5px;
   margin-top: -0.75px;
-  background: rgba(255, 255, 255, 0.92);
-  /* Hueco central: el círculo ya lo tapa visualmente */
-  /* clip los extremos para que no toque el borde del círculo */
-  clip-path: inset(0 28px);
+  margin-left: -28px;        /* centrar: -(56/2) */
+  background: rgba(255, 255, 255, 0.9);
+  /* Recortar la zona central (el círculo ya la cubre visualmente,
+     pero clip-path limpia el solapamiento geométrico) */
+  clip-path:  inset(0 18px); /* 18 = radio(10) + gap(4) + margen(4) */
 }
 
-/* Brazo vertical */
+/* Brazo vertical — misma lógica, eje Y */
 #horizon-reticle::after {
-  content: '';
-  position: absolute;
-  left:   50%;
-  top:    calc(-28px - 6px);
-  height: calc(100% + 56px + 12px);
-  width:  1.5px;
+  content:     '';
+  position:    absolute;
+  left:        50%;
+  top:         50%;
+  width:       1.5px;
+  height:      56px;
   margin-left: -0.75px;
-  background: rgba(255, 255, 255, 0.92);
-  clip-path: inset(28px 0);
+  margin-top:  -28px;
+  background:  rgba(255, 255, 255, 0.9);
+  clip-path:   inset(18px 0);
 }
 
 /* --- Overlay de datos sobre el feed --- */

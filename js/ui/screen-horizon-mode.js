@@ -138,29 +138,68 @@ export class ScreenHorizonMode {
       this.#showCameraError(cameraStatus);
     }
 
-    // Mostrar pantalla antes de inicializar la retícula,
-    // para que el contenedor ya tenga dimensiones reales.
+    // Mostrar pantalla y luego inicializar la retícula.
+    // #initReticle() espera al menos un frame de layout antes
+    // de medir dimensiones, evitando el 0×0 en móviles.
     this.#root.hidden = false;
+    this.#initReticle();
+  }
 
-    // Retícula: crear instancia y forzar resize inicial
-    // ahora que el DOM es visible y tiene dimensiones.
+  // -----------------------------------------------------------
+  // Privado: inicializar retícula tras layout
+  // -----------------------------------------------------------
+
+  /**
+   * Crea la instancia de Reticle y la dimensiona correctamente.
+   *
+   * El problema: hidden=false y getBoundingClientRect() en el mismo
+   * frame sincrono devuelve 0×0 en iOS/Android porque el browser
+   * aún no hizo layout. Solución: aplazar la medición con rAF.
+   *
+   * Estrategia de tres niveles:
+   *   1. rAF → rAF anidado: garantiza dos frames completos de layout
+   *   2. setTimeout(100): rescate si ambos rAF caen con 0×0
+   *   3. ResizeObserver: redibuja ante cualquier cambio posterior
+   */
+  #initReticle() {
     const canvasEl  = this.#root.querySelector('#horizon-reticle');
     const videoWrap = this.#root.querySelector('#horizon-video-wrap');
-    this.#reticle   = new Reticle(canvasEl);
 
-    // Resize inicial explícito (el ResizeObserver puede no disparar
-    // si el contenedor ya tenía dimensiones antes de ser observado)
-    const { width, height } = videoWrap.getBoundingClientRect();
-    if (width > 0 && height > 0) {
-      this.#reticle.resize(width, height);
-    }
+    this.#reticle = new Reticle(canvasEl);
 
-    // ResizeObserver para cambios posteriores (rotación, etc.)
+    // ResizeObserver: redibuja en cualquier cambio posterior
+    // (rotación de pantalla, cambio de tamaño del viewport)
     this.#resizeObs = new ResizeObserver(entries => {
       const { width: w, height: h } = entries[0].contentRect;
       if (w > 0 && h > 0) this.#reticle.resize(w, h);
     });
     this.#resizeObs.observe(videoWrap);
+
+    // Intento de resize con dimensiones reales:
+    // Esperar dos frames para que el browser complete el layout
+    // antes de llamar getBoundingClientRect().
+    const tryResize = () => {
+      const { width, height } = videoWrap.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        this.#reticle.resize(width, height);
+      }
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        tryResize();
+      });
+    });
+
+    // Rescate: si tras 100ms el canvas sigue sin dimensiones
+    // (puede pasar en WebView lentos), forzar resize desde cero.
+    setTimeout(() => {
+      if (!this.#reticle) return;  // fue desmontado antes del timeout
+      const { width, height } = videoWrap.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        this.#reticle.resize(width, height);
+      }
+    }, 100);
   }
 
   // -----------------------------------------------------------
@@ -188,6 +227,10 @@ export class ScreenHorizonMode {
       this.#resizeObs = null;
     }
     clearTimeout(this.#calcTimer);
+
+    // Liberar la retícula para que #initReticle() la recree
+    // limpia en el próximo mount().
+    this.#reticle = null;
 
     if (this.#root) this.#root.hidden = true;
   }

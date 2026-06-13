@@ -1,70 +1,36 @@
 /* =============================================================
    INTIROCK — ScreenHorizonMode
    Pantalla completa del Modo 2: Visión de Horizonte.
-
-   Responsabilidades:
-     - Crear y montar el DOM de la pantalla del Modo 2
-     - Coordinar CameraService, OrientationServiceHorizon,
-       horizonInverseSearch y Reticle
-     - Mostrar azimut, altitud angular y fechas candidatas
-       en tiempo real sobre el feed de cámara
-     - Gestionar "Congelar lectura", rueda de año y captura
-     - Liberar todos los recursos al desmontar (salir del Modo 2)
-
-   Interfaz pública:
-     const screen = new ScreenHorizonMode(appContainer, geoService);
-     await screen.mount();    // muestra la pantalla y arranca servicios
-     screen.unmount();        // oculta y libera cámara + sensores
-
-   El DOM se construye una sola vez (primera llamada a mount()).
-   Las siguientes llamadas reutilizan el DOM existente y solo
-   vuelven a arrancar cámara, sensores y observers.
-
-   El estado del GPS se recibe como referencia al GeolocationService
-   ya iniciado en app.js, para no reiniciarlo al cambiar de modo.
    ============================================================= */
 
-import { CameraService }              from '../sensors/camera-service.js';
-import { OrientationServiceHorizon }  from '../sensors/orientation-service-horizon.js';
-import { horizonInverseSearch }       from '../astronomy/horizon-inverse-search.js';
-import { Reticle }                    from './reticle.js';
+import { CameraService }             from '../sensors/camera-service.js';
+import { OrientationServiceHorizon } from '../sensors/orientation-service-horizon.js';
+import { horizonInverseSearch }      from '../astronomy/horizon-inverse-search.js';
 
 export class ScreenHorizonMode {
 
-  // -----------------------------------------------------------
-  // Estado interno
-  // -----------------------------------------------------------
-
-  #container;      // elemento raíz donde montar la pantalla
-  #geoService;     // GeolocationService ya activo (compartido con Modo 1)
+  #container;
+  #geoService;
 
   #camera      = new CameraService();
   #orientation = new OrientationServiceHorizon();
-  #reticle     = null;
-  #resizeObs   = null;
 
-  #root = null;    // elemento raíz de la pantalla (creado solo una vez)
+  #root = null;
 
   #state = {
-    azimuth:         null,
-    elevation:       null,
-    lat:             null,
-    lon:             null,
-    altitude:        0,
-    year:            new Date().getFullYear(),
-    frozen:          false,
+    azimuth:   null,
+    elevation: null,
+    lat:       null,
+    lon:       null,
+    altitude:  0,
+    year:      new Date().getFullYear(),
+    frozen:    false,
   };
 
   #calcTimer   = null;
   #orientUnsub = null;
   #geoUnsub    = null;
 
-  // -----------------------------------------------------------
-
-  /**
-   * @param {HTMLElement}        container  - Elemento donde montar la pantalla
-   * @param {GeolocationService} geoService - Servicio GPS ya iniciado
-   */
   constructor(container, geoService) {
     this.#container  = container;
     this.#geoService = geoService;
@@ -74,20 +40,12 @@ export class ScreenHorizonMode {
   // Pública: montar
   // -----------------------------------------------------------
 
-  /**
-   * Muestra la pantalla y arranca cámara y sensores.
-   * El DOM se construye solo en la primera llamada.
-   * Las siguientes reutilizan el DOM existente.
-   * @returns {Promise<void>}
-   */
   async mount() {
-    // --- DOM: construir solo la primera vez ---
     if (!this.#root) {
       this.#buildDOM();
       this.#attachEvents();
     }
 
-    // Resetear estado de congelado al remontar
     if (this.#state.frozen) {
       this.#state.frozen = false;
       const btn = this.#root.querySelector('#horizon-btn-freeze');
@@ -97,7 +55,6 @@ export class ScreenHorizonMode {
       }
     }
 
-    // Posición GPS actual (puede ya estar disponible)
     const geoLast = this.#geoService.last;
     if (geoLast && geoLast.lat !== null) {
       this.#state.lat      = geoLast.lat;
@@ -105,7 +62,6 @@ export class ScreenHorizonMode {
       this.#state.altitude = geoLast.altitude;
     }
 
-    // Suscribir a actualizaciones GPS
     this.#geoUnsub = (pos) => {
       this.#state.lat      = pos.lat;
       this.#state.lon      = pos.lon;
@@ -114,11 +70,8 @@ export class ScreenHorizonMode {
       if (!this.#state.frozen) this.#scheduleCalc();
     };
     this.#geoService.subscribe(this.#geoUnsub);
-
-    // Actualizar chip GPS con estado actual
     this.#updateGpsChip(geoLast);
 
-    // Arrancar orientación
     const orientStatus = await this.#orientation.start();
     this.#updateSensorsChip(orientStatus);
 
@@ -131,85 +84,19 @@ export class ScreenHorizonMode {
     };
     this.#orientation.subscribe(this.#orientUnsub);
 
-    // Arrancar cámara
     const videoEl      = this.#root.querySelector('#horizon-video');
     const cameraStatus = await this.#camera.start(videoEl);
     if (cameraStatus === 'error' || cameraStatus === 'unsupported') {
       this.#showCameraError(cameraStatus);
     }
 
-    // Mostrar pantalla y luego inicializar la retícula.
-    // #initReticle() espera al menos un frame de layout antes
-    // de medir dimensiones, evitando el 0×0 en móviles.
     this.#root.hidden = false;
-    this.#initReticle();
-  }
-
-  // -----------------------------------------------------------
-  // Privado: inicializar retícula tras layout
-  // -----------------------------------------------------------
-
-  /**
-   * Crea la instancia de Reticle y la dimensiona correctamente.
-   *
-   * El problema: hidden=false y getBoundingClientRect() en el mismo
-   * frame sincrono devuelve 0×0 en iOS/Android porque el browser
-   * aún no hizo layout. Solución: aplazar la medición con rAF.
-   *
-   * Estrategia de tres niveles:
-   *   1. rAF → rAF anidado: garantiza dos frames completos de layout
-   *   2. setTimeout(100): rescate si ambos rAF caen con 0×0
-   *   3. ResizeObserver: redibuja ante cualquier cambio posterior
-   */
-  #initReticle() {
-    const canvasEl  = this.#root.querySelector('#horizon-reticle');
-    const videoWrap = this.#root.querySelector('#horizon-video-wrap');
-
-    this.#reticle = new Reticle(canvasEl);
-
-    // ResizeObserver: redibuja en cualquier cambio posterior
-    // (rotación de pantalla, cambio de tamaño del viewport)
-    this.#resizeObs = new ResizeObserver(entries => {
-      const { width: w, height: h } = entries[0].contentRect;
-      if (w > 0 && h > 0) this.#reticle.resize(w, h);
-    });
-    this.#resizeObs.observe(videoWrap);
-
-    // Intento de resize con dimensiones reales:
-    // Esperar dos frames para que el browser complete el layout
-    // antes de llamar getBoundingClientRect().
-    const tryResize = () => {
-      const { width, height } = videoWrap.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        this.#reticle.resize(width, height);
-      }
-    };
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        tryResize();
-      });
-    });
-
-    // Rescate: si tras 100ms el canvas sigue sin dimensiones
-    // (puede pasar en WebView lentos), forzar resize desde cero.
-    setTimeout(() => {
-      if (!this.#reticle) return;  // fue desmontado antes del timeout
-      const { width, height } = videoWrap.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        this.#reticle.resize(width, height);
-      }
-    }, 100);
   }
 
   // -----------------------------------------------------------
   // Pública: desmontar
   // -----------------------------------------------------------
 
-  /**
-   * Oculta la pantalla y libera cámara, sensores y observers.
-   * El DOM se conserva para la próxima llamada a mount().
-   */
   unmount() {
     this.#camera.stop();
     this.#orientation.stop();
@@ -222,15 +109,7 @@ export class ScreenHorizonMode {
       this.#geoService.unsubscribe(this.#geoUnsub);
       this.#geoUnsub = null;
     }
-    if (this.#resizeObs) {
-      this.#resizeObs.disconnect();
-      this.#resizeObs = null;
-    }
     clearTimeout(this.#calcTimer);
-
-    // Liberar la retícula para que #initReticle() la recree
-    // limpia en el próximo mount().
-    this.#reticle = null;
 
     if (this.#root) this.#root.hidden = true;
   }
@@ -246,7 +125,9 @@ export class ScreenHorizonMode {
     el.innerHTML = `
       <div id="horizon-video-wrap">
         <video id="horizon-video" playsinline muted autoplay></video>
-        <canvas id="horizon-reticle"></canvas>
+
+        <!-- Crosshair CSS puro: no depende de dimensiones ni timing -->
+        <div id="horizon-reticle" aria-hidden="true"></div>
 
         <!-- Overlay de datos -->
         <div id="horizon-overlay">
@@ -303,7 +184,7 @@ export class ScreenHorizonMode {
   }
 
   // -----------------------------------------------------------
-  // Eventos de controles (se registran solo una vez)
+  // Eventos (se registran solo una vez)
   // -----------------------------------------------------------
 
   #attachEvents() {
@@ -316,8 +197,8 @@ export class ScreenHorizonMode {
       this.#scheduleCalc();
     });
 
-    q('horizon-btn-freeze').addEventListener('click',   () => this.#toggleFreeze());
-    q('horizon-btn-capture').addEventListener('click',  () => this.#onCapture());
+    q('horizon-btn-freeze').addEventListener('click',  () => this.#toggleFreeze());
+    q('horizon-btn-capture').addEventListener('click', () => this.#onCapture());
   }
 
   // -----------------------------------------------------------

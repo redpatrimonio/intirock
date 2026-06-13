@@ -79,10 +79,6 @@
 
 /* ============================================================
    CONTENEDOR DE PANTALLAS
-
-   #screens ocupa todo el espacio restante entre el selector
-   y el footer. Cada modo es position:absolute inset:0 dentro
-   de él, como dos páginas que se alternan.
    ============================================================ */
 
 #screens {
@@ -110,10 +106,6 @@
    MODO 2: VISIÓN DE HORIZONTE
    ============================================================ */
 
-/* #screen-horizon se monta dinámicamente dentro de
-   #screen-horizon-container. Usa position:absolute inset:0
-   igual que su padre para que la cadena de alturas sea
-   explícita en cada nivel y el video reciba altura real. */
 #screen-horizon {
   position: absolute;
   inset: 0;
@@ -141,15 +133,57 @@
   display: block;
 }
 
+/* ============================================================
+   CROSSHAIR (CSS puro — sin canvas, sin timing)
+
+   #horizon-reticle es un <div> centrado sobre el video.
+   Los brazos de la cruz son ::before (horizontal) y ::after
+   (vertical). El círculo central es el propio div con
+   border-radius: 50%.
+
+   Sombra via filter:drop-shadow para contraste sobre
+   cualquier fondo (cielo claro, roca oscura).
+   ============================================================ */
+
 #horizon-reticle {
   position: absolute;
-  inset: 0;
-  /* width/height explícitos son necesarios: <canvas> tiene
-     dimensiones intrínsecas (300×150px por defecto) que
-     impiden que inset:0 lo estire como a un <div>. */
-  width: 100%;
-  height: 100%;
+  top:  50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width:  28px;
+  height: 28px;
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
   pointer-events: none;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7));
+}
+
+/* Brazo horizontal */
+#horizon-reticle::before {
+  content: '';
+  position: absolute;
+  top:    50%;
+  left:   calc(-28px - 6px);   /* gap de 6px + brazo de 28px */
+  width:  calc(100% + 56px + 12px);
+  height: 1.5px;
+  margin-top: -0.75px;
+  background: rgba(255, 255, 255, 0.92);
+  /* Hueco central: el círculo ya lo tapa visualmente */
+  /* clip los extremos para que no toque el borde del círculo */
+  clip-path: inset(0 28px);
+}
+
+/* Brazo vertical */
+#horizon-reticle::after {
+  content: '';
+  position: absolute;
+  left:   50%;
+  top:    calc(-28px - 6px);
+  height: calc(100% + 56px + 12px);
+  width:  1.5px;
+  margin-left: -0.75px;
+  background: rgba(255, 255, 255, 0.92);
+  clip-path: inset(28px 0);
 }
 
 /* --- Overlay de datos sobre el feed --- */
@@ -369,8 +403,6 @@
   color:        #111111;
 }
 
-/* El dial llena el espacio sobrante; overflow:hidden evita
-   que desborde si la pantalla es muy baja. */
 #dial-section {
   flex: 1;
   min-height: 0;
